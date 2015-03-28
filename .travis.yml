@@ -1,0 +1,7 @@
+language: ruby
+env:
+- RACK_ENV=test
+before_install:
+- git clone https://github.com/CocoaPods/Humus
+before_script:
+- cd Humus && bundle exec rake db:seed
