@@ -1,65 +1,181 @@
 FORMAT: 1A
-HOST: http://metrics.cocoapods.org
+HOST: http://polls.apiblueprint.org/
 
-# CocoaPods Metrics
+# Polls API
 
-Metrics is an API to view metrics for Pods.
+Polls is a simple API allowing consumers to view polls and vote in them.
 
-## Status [/api/v1/status]
-+ Attributes
-    + github (Service Status)
-    + cocoadocs (Service Status)
+# Polls API Root [/]
 
-### Retrieve the Status [GET]
+This resource does not have any attributes. Instead it offers the initial
+API affordances in the form of the links in the JSON body.
+
+It is recommend to follow the “url” link values,
+[Link](https://tools.ietf.org/html/rfc5988) or Location headers where
+applicable to retrieve resources. Instead of constructing your own URLs,
+to keep your client decoupled from implementation details.
+
+## Retrieve the Entry Point [GET]
+
 + Response 200 (application/json)
-    + Attributes (Status)
 
-## Metrics [/api/v1/pods/{name}]
+        {
+            "questions_url": "/questions"
+        }
+
+## Group Question
+
+Resources related to questions in the API.
+
+## Question [/questions/{question_id}]
+
+A Question object has the following attributes:
+
++ question
++ published_at - An ISO8601 date when the question was published.
++ url
++ choices - An array of Choice objects.
+
 + Parameters
-    + name: QueryKit (required) - The name of the Pod
+    + question_id: 1 (required, number) - ID of the Question in form of an integer
 
-+ Attributes
-    + github (GitHub Metrics)
-    + cocoadocs (CocoaDoc Metrics)
+### View a Questions Detail [GET]
 
-### Retrieve the Metrics for a Pod [GET]
 + Response 200 (application/json)
-    + Attributes (Metrics)
 
-## Data Structures
+        {
+            "question": "Favourite programming language?",
+            "published_at": "2014-11-11T08:40:51.620Z",
+            "url": "/questions/1",
+            "choices": [
+                {
+                    "choice": "Swift",
+                    "url": "/questions/1/choices/1",
+                    "votes": 2048
+                }, {
+                    "choice": "Python",
+                    "url": "/questions/1/choices/2",
+                    "votes": 1024
+                }, {
+                    "choice": "Objective-C",
+                    "url": "/questions/1/choices/3",
+                    "votes": 512
+                }, {
+                    "choice": "Ruby",
+                    "url": "/questions/1/choices/4",
+                    "votes": 256
+                }
+            ]
+        }
 
-### Service Status
-+ total: 8949 (number, required)
-+ complete: 8949 (number)
-+ not_found: 988 (number)
+## Choice [/questions/{question_id}/choices/{choice_id}]
 
-### GitHub Metrics
-+ subscribers: 29 (number)
-+ stargazers: 823 (number)
-+ forks: 36 (number)
-+ contributors: 5 (number)
-+ open_issues: 1 (number)
-+ open_pull_requests: 1 (number)
-+ created_at: `2014-06-20 06:27:17 UTC`
-+ updated_at: `2015-03-28 04:03:03 UTC`
-+ language: `Objective-C`
-+ closed_issues: 12 (number)
-+ closed_pull_requests: 11 (number)
++ Parameters
+    + question_id: 1 (required, number) - ID of the Question in form of an integer
+    + choice_id: 1 (required, number) - ID of the Choice in form of an integer
 
-### CocoaDoc Metrics
-+ download_size: 464 (number)
-+ total_files: 11 (number)
-+ total_comments: 292 (number)
-+ total_lines_of_code: 828 (number)
-+ doc_percent: 89 (number)
-+ readme_complexity: 74 (number)
-+ initial_commit_date: `2015-01-29 17:09:31 UTC`
-+ rendered_readme_url: `http://cocoadocs.org/docsets/QueryKit/0.9.1/README.html`
-+ created_at: `2015-01-13 09:20:05 UTC`
-+ updated_at: `2015-03-21 01:55:01 UTC`
-+ license_short_name: BSD
-+ license_canonical_url: `https://en.wikipedia.org/wiki/BSD_licenses`
-+ total_test_expectations: 105 (number)
-+ notability: 0 (number)
-+ dominant_language: Objective C
-+ quality_estimate: 57 (number)
+### Vote on a Choice [POST]
+
+This action allows you to vote on a question's choice.
+
++ Response 201
+
+    + Headers
+
+            Location: /questions/1
+
+## Questions Collection [/questions{?page}]
+
++ Parameters
+    + page: 1 (optional, number) - The page of questions to return
+
+### List All Questions [GET]
+
++ Response 200 (application/json)
+
+    + Headers
+
+            Link: </questions?page=2>; rel="next"
+
+    + Body
+
+            [
+                {
+                    "question": "Favourite programming language?",
+                    "published_at": "2014-11-11T08:40:51.620Z",
+                    "url": "/questions/1",
+                    "choices": [
+                        {
+                            "choice": "Swift",
+                            "url": "/questions/1/choices/1",
+                            "votes": 2048
+                        }, {
+                            "choice": "Python",
+                            "url": "/questions/1/choices/2",
+                            "votes": 1024
+                        }, {
+                            "choice": "Objective-C",
+                            "url": "/questions/1/choices/3",
+                            "votes": 512
+                        }, {
+                            "choice": "Ruby",
+                            "url": "/questions/1/choices/4",
+                            "votes": 256
+                        }
+                    ]
+                }
+            ]
+
+### Create a New Question [POST]
+
+You may create your own question using this action. It takes a JSON
+object containing a question and a collection of answers in the
+form of choices.
+
++ question (string) - The question
++ choices (array[string]) - A collection of choices.
+
++ Request (application/json)
+
+        {
+            "question": "Favourite programming language?",
+            "choices": [
+                "Swift",
+                "Python",
+                "Objective-C",
+                "Ruby"
+            ]
+        }
+
++ Response 201 (application/json)
+
+    + Headers
+
+            Location: /questions/2
+
+    + Body
+
+            {
+                "question": "Favourite programming language?",
+                "published_at": "2014-11-11T08:40:51.620Z",
+                "url": "/questions/2",
+                "choices": [
+                    {
+                        "choice": "Swift",
+                        "url": "/questions/2/choices/1",
+                        "votes": 0
+                    }, {
+                        "choice": "Python",
+                        "url": "/questions/2/choices/2",
+                        "votes": 0
+                    }, {
+                        "choice": "Objective-C",
+                        "url": "/questions/2/choices/3",
+                        "votes": 0
+                    }, {
+                        "choice": "Ruby",
+                        "url": "/questions/2/choices/4",
+                        "votes": 0
+                    }
+                ]
+            }
